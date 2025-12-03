@@ -1,16 +1,20 @@
-# React + Vite
+## Resumen del trabajo
+En este repositorio he tomado el proyecto `conexion-api` y he extraído la lógica repetida de consumo de APIs en React hacia **custom hooks** para mejorar la reutilización y la claridad del código.
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Los hooks implementados:
+- `useFetch`: hook genérico para realizar peticiones HTTP con `fetch`, manejo de estado (`loading`, `error`, `data`) y posibilidad de `refetch`.
+- `usePosts`: hook específico para cargar la lista de posts (envolviendo a `useFetch`).
+- `usePostDetail`: hook específico para cargar el detalle de un post por `id`.
 
-Currently, two official plugins are available:
+## Qué cambié / añadí
+- Añadí `src/hooks/useFetch.js` con la lógica reutilizable.
+- Añadí `src/hooks/usePosts.js` y `src/hooks/usePostDetail.js`.
+- Añadí este `README.md`.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+> Importante: No modifiqué el repo original en `ericmaster/curso-desarrollo-web`. Este trabajo está en un nuevo repositorio para no afectar el original.
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Reflexión personal
+Al realizar esta tarea aprendí que:
+- Extraer lógica en hooks reduce la duplicación y mejora la mantenibilidad.
+- Manejar el ciclo de vida de las peticiones (AbortController y cancelar peticiones) evita errores si el componente se desmonta.
+- Separar responsabilidades

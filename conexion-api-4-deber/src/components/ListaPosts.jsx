@@ -1,137 +1,71 @@
-import { useState, useEffect } from 'react';
-import { Link } from "react-router";
+import React, { useEffect, useState } from 'react';
+import useFetch from '../hooks/useFetch';
 import { Link } from 'react-router-dom';
 
-function ListaPosts() {
-  const [pagina, setPagina] = useState(1);
-  const [posts, setPosts] = useState([]);
-  const [cargando, setCargando] = useState(false);
-  const [error, setError] = useState(null);
-  const [limite, setLimite] = useState(20);
+export default function ListaPosts() {
+
+  const [users, setUsers] = useState([]);
+  const [userFilter, setUserFilter] = useState(''); 
+  const [keyword, setKeyword] = useState('');
+  const [debouncedKeyword, setDebouncedKeyword] = useState('');
+  const { data: posts, loading, error, refetch } = useFetch(null, {}, []); 
 
   useEffect(() => {
-    const cargarPosts = async () => {
-      try {
-        setCargando(true);
-        const respuesta = await fetch(
-          `https://jsonplaceholder.typicode.com/posts?_limit=${limite}`
-        );
-        
-        if (!respuesta.ok) {
-          throw new Error('Error al cargar los posts');
-        }
-        
-        const datos = await respuesta.json();
-        setPosts(datos);
-        setError(null);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setCargando(false);
-      }
-    };
+    fetch('http://localhost:3000/users')
+      .then(r => r.json())
+      .then(setUsers)
+      .catch(err => console.error('Users fetch:', err));
+  }, []);
 
-    cargarPosts();
-  }, [pagina, limite]);
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedKeyword(keyword.trim()), 400);
+    return () => clearTimeout(t);
+  }, [keyword]);
 
-  if (cargando) {
-    return (
-      <div className="posts-grid">
-        {[...Array(6)].map((_, i) => (
-          <div key={i} className="post-card" style={{ opacity: 0.5 }}>
-            <div style={{ background: '#ddd', height: '20px', marginBottom: '10px' }}></div>
-            <div style={{ background: '#ddd', height: '60px' }}></div>
-          </div>
-        ))}
-      </div>
-    );
-  }
+  useEffect(() => {
+    const base = 'http://localhost:3000/posts';
+    const params = new URLSearchParams();
+    if (userFilter) params.append('userId', userFilter);
+    if (debouncedKeyword) params.append('q', debouncedKeyword);
+    const final = params.toString() ? `${base}?${params.toString()}` : base;
+    refetch(final);
+  }, [userFilter, debouncedKeyword]);
 
-  if (error) {
-    return (
-      <div className="error">
-        <h2>❌ Error</h2>
-        <p>{error}</p>
-      </div>
-    );
-  }
-  
-  <input
-    type="text"
-    placeholder="🔍 Buscar posts..."
-    value={busqueda}
-    onChange={(e) => setBusqueda(e.target.value)}
-    style={{
-      width: '100%',
-      padding: '1rem',
-      fontSize: '1rem',
-      border: '2px solid #ddd',
-      borderRadius: '8px',
-      marginBottom: '1rem'
-    }}
-  />
   return (
-    <div>
-      <h2>📝 Lista de Posts</h2>
-      <div className="posts-grid">
-        {postsFiltrados.map(post => (
-          <Link 
-            to={`/post/${post.id}`} 
-            key={post.id} 
-            style={{ textDecoration: 'none', color: 'inherit' }}
-          >
-            <div className="post-card">
-              <h3>{post.title}</h3>
-              <p>{post.body.substring(0, 100)}...</p>
-            </div>
-          </Link>
+    <div className="container">
+      <h2>Listado de posts</h2>
+
+      <div className="filters" style={{ display: 'flex', gap: '10px', marginBottom: '12px' }}>
+        <select value={userFilter} onChange={e => setUserFilter(e.target.value)}>
+          <option value="">Todos los usuarios</option>
+          {users.map(u => (
+            <option key={u.id} value={u.id}>{u.name}</option>
+          ))}
+        </select>
+
+        <input
+          placeholder="Buscar por palabra en título o contenido"
+          value={keyword}
+          onChange={e => setKeyword(e.target.value)}
+        />
+
+        <Link to="/posts/new" className="btn">Crear post</Link>
+      </div>
+
+      {loading && <p>Cargando posts...</p>}
+      {error && <p style={{ color: 'red' }}>Error: {error.message || error}</p>}
+
+      <ul className="posts-grid" style={{ listStyle: 'none', padding: 0, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '12px' }}>
+        {posts && posts.map(p => (
+          <li key={p.id} style={{ background: '#fff', padding: '12px', borderRadius: '8px', boxShadow: '0 2px 6px rgba(0,0,0,0.06)' }}>
+            <Link to={`/posts/${p.id}`} style={{ textDecoration: 'none', color: '#111' }}>
+              <h3>{p.title}</h3>
+              <p style={{ color: '#666' }}>{p.body?.slice(0, 120)}{p.body?.length > 120 ? '...' : ''}</p>
+            </Link>
+            <small style={{ display: 'block', marginTop: '8px', color: '#888' }}>Autor: {p.userId ? `Usuario ${p.userId}` : 'Desconocido'}</small>
+          </li>
         ))}
-      </div>
-
-      {/* Controles de paginación */}
-      <div className="paginacion">
-        <button 
-          onClick={() => {
-            console.log('Click en Anterior, página actual:', pagina);
-            setPagina(p => {
-              const nueva = Math.max(1, p - 1);
-              console.log('Nueva página:', nueva);
-              return nueva;
-            });
-          }}
-          disabled={pagina === 1}
-          className="btn-paginacion"
-        >
-          ← Anterior
-        </button>
-        <span className="pagina-actual">Página {pagina}</span>
-        <button 
-          onClick={() => {
-            console.log('Click en Siguiente, página actual:', pagina);
-            setPagina(p => {
-              const nueva = p + 1;
-              console.log('Nueva página:', nueva);
-              return nueva;
-            });
-          }}
-          disabled={posts.length < limite}
-          className="btn-paginacion"
-        >
-          Siguiente →
-        </button>
-      </div>
+      </ul>
     </div>
-  )
-  
+  );
 }
-
-
-
-const [busqueda, setBusqueda] = useState('');
-
-const postsFiltrados = posts.filter(post =>
-  post.title.toLowerCase().includes(busqueda.toLowerCase()) ||
-  post.body.toLowerCase().includes(busqueda.toLowerCase())
-);
-
-export default ListaPosts;

@@ -48,8 +48,7 @@ export const useFetch = (url, options = {}, deps = []) => {
     return () => {
       if (controllerRef.current) controllerRef.current.abort();
     };
-
-  }, deps); 
+  }, deps);
 
   const refetch = (overrideUrl) => fetchData(overrideUrl);
 
